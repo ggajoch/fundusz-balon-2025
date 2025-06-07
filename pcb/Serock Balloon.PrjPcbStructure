@@ -1,0 +1,4 @@
+Record=TopLevelDocument|FileName=connectors.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=connectors.SchDoc|FileName=microcontroller.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=connectors.SchDoc|FileName=radio.SchDoc|SheetNumber= 
+Record=NoMainPathDocument|SourceDocument=connectors.SchDoc|FileName=sensor.SchDoc|SheetNumber= 
