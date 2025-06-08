@@ -127,7 +127,7 @@ void setup() {
 
 #ifdef DEBUG
   SerialUSB.begin(9600);
-  //while (!SerialUSB);
+  while (!SerialUSB);
 #endif
 
   SerialUSB.println("start!");
@@ -135,6 +135,16 @@ void setup() {
   if (!bme.begin()) {
     SerialUSB.println("Could not find a valid BME280 sensor, check wiring!");
   }
+  SerialUSB.println("BME280 OK!");
+  float temperature, humidity, pressure;
+  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+  BME280::PresUnit presUnit(BME280::PresUnit_Pa);
+  bme.read(pressure, temperature, humidity, tempUnit, presUnit);
+  SerialUSB.print("Pressure = ");
+  SerialUSB.print(pressure);
+  SerialUSB.print(", Temperature = ");
+  SerialUSB.println(temperature);
+  
 
   digitalWrite(gps_on_off, HIGH);
   //delay(1500);
@@ -160,6 +170,14 @@ void setup() {
 Frame gpsframe;
 
 void loop() {
+    float temperature, humidity, pressure;
+  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
+  BME280::PresUnit presUnit(BME280::PresUnit_Pa);
+  bme.read(pressure, temperature, humidity, tempUnit, presUnit);
+  SerialUSB.print("Pressure = ");
+  SerialUSB.print(pressure);
+  SerialUSB.print(", Temperature = ");
+  SerialUSB.println(temperature);
   // put your main code here, to run repeatedly:
   while (Serial.available() > 0) {
     //    volatile auto _ = (char)Serial.read();
