@@ -129,7 +129,7 @@ AnnotateOrder=8
 DoLibraryUpdate=1
 DoDatabaseUpdate=1
 ClassGenCCAutoEnabled=1
-ClassGenCCAutoRoomEnabled=1
+ClassGenCCAutoRoomEnabled=0
 ClassGenNCAutoScope=None
 DItemRevisionGUID=
 GenerateClassCluster=0
@@ -157,12 +157,12 @@ DocumentPath=balloon.html
 DItemRevisionGUID=
 
 [Parameter1]
-Name=Address1
-Value=https://github.com/CanSatKit
-
-[Parameter2]
 Name=ProjectName
 Value=CanSat Kit
+
+[Parameter2]
+Name=Address1
+Value=https://github.com/CanSatKit
 
 [Configuration1]
 Name=Default Configuration
@@ -946,6 +946,7 @@ Type155=1
 Type156=1
 Type157=1
 Type158=1
+Type159=1
 
 [Difference Levels]
 Type1=1
@@ -1034,6 +1035,7 @@ Type83=1
 Type84=1
 Type85=1
 Type86=1
+Type87=1
 
 [Electrical Rules Check]
 Type1=1
@@ -1197,6 +1199,8 @@ Type158=0
 Type159=0
 Type160=0
 Type161=0
+Type162=1
+Type163=1
 
 [ERC Connection Matrix]
 L1=NNNNNNNNNNNWNNNWW
