@@ -29,34 +29,34 @@ constexpr auto gps_pps = 8;
 Radio radio(Pins::Radio::ChipSelect,
             Pins::Radio::DIO0,
             434.0,
-            Bandwidth_500000_Hz,
-            SpreadingFactor_9,
+            Bandwidth_125000_Hz,
+            SpreadingFactor_11,
             CodingRate_4_8);
 
 TinyGPSPlus gps;
 
-// uint8_t calculate_checksum(const char * cmd) {
-//   auto len = strlen(cmd);
-//   len--; // without last byte (*)
-//   uint8_t crc = 0;
-//   for (uint8_t i = 1; i < len; ++i) {
-//     crc ^= cmd[i];
-//   }
-//   return crc;
-// }
+uint8_t calculate_checksum(const char * cmd) {
+  auto len = strlen(cmd);
+  len--; // without last byte (*)
+  uint8_t crc = 0;
+  for (uint8_t i = 1; i < len; ++i) {
+    crc ^= cmd[i];
+  }
+  return crc;
+}
 
-// // example: $PSRF100,0,115200,8,1,0*
-// void send_nmea_command(const char * cmd) {
-//   Serial.print(cmd);
-//   SerialUSB.print(cmd);
+// example: $PSRF100,0,115200,8,1,0*
+void send_nmea_command(const char * cmd) {
+  Serial.print(cmd);
+  SerialUSB.print(cmd);
 
-//   uint8_t checksum = calculate_checksum(cmd);
-//   char tmp[5];
-//   sprintf(tmp, "%.2X\r\n", checksum);
+  uint8_t checksum = calculate_checksum(cmd);
+  char tmp[5];
+  sprintf(tmp, "%.2X\r\n", checksum);
 
-//   Serial.print(tmp);
-//   SerialUSB.print(tmp);
-// }
+  Serial.print(tmp);
+  SerialUSB.print(tmp);
+}
 
 // void switch_to_osp() {
 //   send_nmea_command("$PSRF100,0,4800,8,1,0*");
@@ -127,7 +127,7 @@ void setup() {
 
 #ifdef DEBUG
   SerialUSB.begin(9600);
-  while (!SerialUSB);
+  // while (!SerialUSB);
 #endif
 
   SerialUSB.println("start!");
@@ -151,76 +151,29 @@ void setup() {
   // Serial.print("cokolwiek\n");
   SerialUSB.print("GPS wakeup status: ");
   SerialUSB.println(digitalRead(gps_wakeup));
+  delay(1000);
 
   radio.begin();
   radio.disable_debug();
 
-  digitalWrite(LED, HIGH);
+  digitalWrite(LED, LOW);
 
-  SerialUSB.print((int)digitalRead(gps_pps));
+  send_nmea_command("$PMTK225,9*");
+
+  LowPower.attachInterruptWakeup(gps_pps, repetitionsIncrease, CHANGE);
+
 }
 
-//char radiobuf[1024] = {'\0'};
-//int radiobuflen = 0;
-// Frame gpsframe;
+void repetitionsIncrease() {
+  // This function will be called once on device wakeup
+  // You can do some little operations here (like changing variables which will be used in the loop)
+  // Remember to avoid calling delay() and long running functions since this functions executes in interrupt context
+}
 
-// void loop() {
-//   //   float temperature, humidity, pressure;
-//   // BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
-//   // BME280::PresUnit presUnit(BME280::PresUnit_Pa);
-//   // bme.read(pressure, temperature, humidity, tempUnit, presUnit);
-//   // SerialUSB.print("Pressure = ");
-//   // SerialUSB.print(pressure);
-//   // SerialUSB.print(", Temperature = ");
-//   // SerialUSB.println(temperature);
-//   while (Serial.available() > 0) {
-// //     //    volatile auto _ = (char)Serial.read();
-//     char data = Serial.read();
-// //     gps.encode(data);
-//     SerialUSB.print(data);
-    
-// //     if (data == '$') {
-// //       //SerialUSB.print("length: ");
-// //       //SerialUSB.println(frame.size());
-// //       radio.transmit(gpsframe);
-// //       gpsframe.clear();
-// //       //radio.flush();
-// // //      for (int i = 0; i < radiobuflen; ++i) {
-// // //        radiobuf[i] = '\0';
-// // //      }
-// // //      radiobuflen = 0;
-// //     }
-
-// //     gpsframe.print(data);
-// //     //radiobuf[radiobuflen++] = data;
-//   }
-//   while (SerialUSB.available() > 0) {
-//     Serial.print((char)SerialUSB.read());
-//   }
-
-//   static auto last_time = millis();
-//   if (millis() > last_time + 1000) {
-//     //SerialUSB.print((int)digitalRead(gps_pps));
-//     static bool state = false;
-//     state = !state;
-//     digitalWrite(LED, state);
-
-//     //radio.transmit(frame);
-
-//     last_time = millis();
-//   }
-// }
-
-
-static uint32_t last_sentencesWithFix = 0;
 static uint32_t last_tx_time = 0;
 
-bool new_data() {
-  return last_sentencesWithFix != gps.sentencesWithFix();
-}
-
 bool timeout() {
-  return millis() > last_tx_time + 3000u;
+  return millis() > last_tx_time + 5000u;
 }
 
 struct radio_frame {
@@ -239,19 +192,10 @@ static_assert(sizeof(radio_frame) == 18, "align?");
 
 void loop()
 {
-#ifndef DEBUG
-  LowPower.idle();
-#endif
+  // LowPower.idle();
 
-  if (new_data() || timeout()) {
-    last_sentencesWithFix = gps.sentencesWithFix();
+  if (timeout()) {
     last_tx_time = millis();
-
-    //  static bool gps_setted_up = false;
-    //  if (gps.location.isValid() && !gps_setted_up) {
-    //    gps_setted_up = true;
-    //    setup_power_mode();
-    //  }
 
     float temperature, humidity, pressure;
     BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
@@ -281,7 +225,6 @@ void loop()
     printFloat(humidity, true, 5, 1);
     printInt(gps.satellites.value(), gps.satellites.isValid(), 5);
 
-SerialUSB.print(humidity);
     SerialUSB.print(" | ");
     printInt(gps.charsProcessed(), true, 6);
     printInt(gps.sentencesWithFix(), true, 10);
@@ -299,6 +242,7 @@ static void clear_nmea_queue()
 {
   while (Serial.available()) {
     char d = Serial.read();
+    // SerialUSB.print(d);
     gps.encode(d);
   }
 }
@@ -352,7 +296,7 @@ static void printDateTime(TinyGPSDate &d, TinyGPSTime &t)
   }
 
   if (!t.isValid())
-  {
+  { 
     SerialUSB.print(F("******** "));
   }
   else
