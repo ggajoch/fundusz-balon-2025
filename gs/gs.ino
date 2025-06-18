@@ -29,7 +29,7 @@ File dataFile;
 
 Radio radio(Pins::EM1::Radio::ChipSelect,
             Pins::EM1::Radio::DIO0,
-            435.0,                  // frequency in MHz
+            434.0,                  // frequency in MHz
             Bandwidth_125000_Hz,    // bandwidth - check with CanSat regulations to set allowed value
             SpreadingFactor_11,      // see provided presentations to determine which setting is the best
             CodingRate_4_8);        // see provided presentations to determine which setting is the best

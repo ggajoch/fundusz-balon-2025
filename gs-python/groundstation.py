@@ -11,7 +11,7 @@ import re
 import datetime
 
 # konfiguracja
-PORT = 'COM9'
+PORT = 'COM3'
 kml_file_name = "position.kml"
 output_file_name = "output.csv"
 

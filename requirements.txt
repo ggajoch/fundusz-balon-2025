@@ -1,0 +1,4 @@
+pyserial
+simplekml
+matplotlib
+drawnow
