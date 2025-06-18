@@ -4,6 +4,8 @@
 
 '''
 
+.\influxdb3.exe create database db_balon_b2
+
 .\influxdb3 serve --node-id my_node_name --object-store file --data-dir ~/.influxdb3_data --without-auth
 
 http://localhost:3000/d/0bc3a2a9-8321-46cb-83ce-f6510830d07d/falenty-2025-balon?orgId=1&from=now-30m&to=now&timezone=browser&refresh=5s
