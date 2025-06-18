@@ -1,6 +1,4 @@
-#include <TinyGPSPlus.h>
-
-#define DEBUG
+// #define DEBUG
 
 /* docs
     https://www.sparkfun.com/datasheets/GPS/NMEA%20Reference%20Manual-Rev2.1-Dec07.pdf
@@ -10,10 +8,10 @@
 */
 
 #include <CanSatKit.h>
-//#include <TinyGPS++.h>
 #include <Wire.h>
 #include <BME280I2C.h>
 #include <ArduinoLowPower.h>
+#include <TinyGPSPlus.h>
 
 using namespace CanSatKit;
 
@@ -21,102 +19,44 @@ BME280I2C bme;
 
 constexpr auto LED = 13;
 
-constexpr auto gps_reset = A1;
+// constexpr auto gps_reset = A1; // VBACKUP on this pin
 constexpr auto gps_force_on = A2;
 constexpr auto gps_wakeup = A4;
 constexpr auto gps_pps = 8;
 
 Radio radio(Pins::Radio::ChipSelect,
             Pins::Radio::DIO0,
-            434.0,
+            433.8,
             Bandwidth_125000_Hz,
             SpreadingFactor_11,
             CodingRate_4_8);
 
 TinyGPSPlus gps;
 
-uint8_t calculate_checksum(const char * cmd) {
-  auto len = strlen(cmd);
-  len--; // without last byte (*)
-  uint8_t crc = 0;
-  for (uint8_t i = 1; i < len; ++i) {
-    crc ^= cmd[i];
-  }
-  return crc;
-}
+// uint8_t calculate_checksum(const char * cmd) {
+//   auto len = strlen(cmd);
+//   len--; // without last byte (*)
+//   uint8_t crc = 0;
+//   for (uint8_t i = 1; i < len; ++i) {
+//     crc ^= cmd[i];
+//   }
+//   return crc;
+// }
 
 // example: $PSRF100,0,115200,8,1,0*
-void send_nmea_command(const char * cmd) {
-  Serial.print(cmd);
-  SerialUSB.print(cmd);
+// void send_nmea_command(const char * cmd) {
+//   Serial.print(cmd);
+//   SerialUSB.print(cmd);
 
-  uint8_t checksum = calculate_checksum(cmd);
-  char tmp[5];
-  sprintf(tmp, "%.2X\r\n", checksum);
+//   uint8_t checksum = calculate_checksum(cmd);
+//   char tmp[5];
+//   sprintf(tmp, "%.2X\r\n", checksum);
 
-  Serial.print(tmp);
-  SerialUSB.print(tmp);
-}
-
-// void switch_to_osp() {
-//   send_nmea_command("$PSRF100,0,4800,8,1,0*");
-// }
-
-// void set_power_mode() {
-//   constexpr static uint8_t table[] =
-//   { 0xA0, 0xA2,
-//     0x00, 0x10,
-//     0xDA,
-//     0x03,
-//     0x00, 0x64,
-//     0x00, 0x00, 0x01, 0xF4,
-//     0x00, 0x00, 0x03, 0xE8,
-//     0x00, 0x6d, 0xdd, 0x00,
-//     0x04, 0x6B,
-//     0xB0, 0xB3
-//   };
-//   Serial.write(table, sizeof(table));
-// }
-
-// void switch_to_nmea() {
-//   while (digitalRead(gps_wakeup) == LOW) {}
-//   constexpr static uint8_t table_nmea[] =
-//   { 0xA0, 0xA2, 0x00, 0x18,
-//     0x81, 0x02,
-//     0x05, 0x01,  // GGA
-//     0x00, 0x01,  // GLL
-//     0x00, 0x01,  // GSA
-//     0x00, 0x01,  // GSV
-//     0x00, 0x01,  // RMC
-//     0x00, 0x01,  // VTG
-//     0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x01,
-//     0x12, 0xC0,
-//     0x01, 0x64,  // checksum (sum all the bytes except first four)
-//     0xB0, 0xB3
-//   };
-//   Serial.write(table_nmea, sizeof(table_nmea));
-// }
-
-// void setup_power_mode() {
-//   SerialUSB.println("Setting GPS power mode!");
-//   switch_to_osp();
-//   delay(100);
-//   set_power_mode();
-//   delay(1000);
-//   switch_to_nmea();
-//   delay(2000);
-//   // wait for NMEA, clear queue
-//   while (Serial.available()) {
-//     volatile char d = Serial.read();
-//     (void)d;
-//   }
+//   Serial.print(tmp);
+//   SerialUSB.print(tmp);
 // }
 
 void setup() {
-  //digitalWrite(gps_reset, HIGH);
-  //pinMode(gps_reset, OUTPUT);
-  //digitalWrite(gps_reset, HIGH);
-
   pinMode(LED, OUTPUT);
   pinMode(gps_force_on, OUTPUT);
   pinMode(gps_wakeup, INPUT);
@@ -127,47 +67,35 @@ void setup() {
 
 #ifdef DEBUG
   SerialUSB.begin(9600);
-  // while (!SerialUSB);
+  while (!SerialUSB);
+  SerialUSB.println("start!");
 #endif
 
-  SerialUSB.println("start!");
+  bool bme_ok = bme.begin();
 
-  if (!bme.begin()) {
+#ifdef DEBUG
+  if (bme_ok) {
+    SerialUSB.println("BME280 OK!");
+  } else {
     SerialUSB.println("Could not find a valid BME280 sensor, check wiring!");
   }
-  SerialUSB.println("BME280 OK!");
-  float temperature, humidity, pressure;
-  BME280::TempUnit tempUnit(BME280::TempUnit_Celsius);
-  BME280::PresUnit presUnit(BME280::PresUnit_Pa);
-  bme.read(pressure, temperature, humidity, tempUnit, presUnit);
-  SerialUSB.print("Pressure = ");
-  SerialUSB.print(pressure);
-  SerialUSB.print(", Temperature = ");
-  SerialUSB.println(temperature);
+#endif
   
-
   digitalWrite(gps_force_on, HIGH);
+#ifdef DEBUG
   delay(100);
-  // Serial.print("cokolwiek\n");
   SerialUSB.print("GPS wakeup status: ");
   SerialUSB.println(digitalRead(gps_wakeup));
+#endif
   delay(1000);
 
   radio.begin();
+  radio.low_power(true);
   radio.disable_debug();
 
   digitalWrite(LED, LOW);
 
-  send_nmea_command("$PMTK225,9*");
-
-  LowPower.attachInterruptWakeup(gps_pps, repetitionsIncrease, CHANGE);
-
-}
-
-void repetitionsIncrease() {
-  // This function will be called once on device wakeup
-  // You can do some little operations here (like changing variables which will be used in the loop)
-  // Remember to avoid calling delay() and long running functions since this functions executes in interrupt context
+  // send_nmea_command("$PMTK225,9*"); // AlwaysLocate mode, not used
 }
 
 static uint32_t last_tx_time = 0;
@@ -192,7 +120,9 @@ static_assert(sizeof(radio_frame) == 18, "align?");
 
 void loop()
 {
-  // LowPower.idle();
+#ifndef DEBUG
+  LowPower.idle();
+#endif
 
   if (timeout()) {
     last_tx_time = millis();
@@ -204,7 +134,9 @@ void loop()
 
     static bool state = false;
     state = !state;
+#ifdef DEBUG
     digitalWrite(LED, state);
+#endif
 
     frame.latitude = gps.location.isValid() ? gps.location.lat() : 0;
     frame.longitude = gps.location.isValid() ? gps.location.lng() : 0;
