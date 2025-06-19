@@ -268,8 +268,8 @@ if __name__ == "__main__":
                     hum.append(humidity)
                     temp.append(temperature)
 
-                    start_long = 20.921160924098206
-                    start_lat = 52.13768408696847
+                    start_long = 20.746100
+                    start_lat = 52.066941
                     start_alt = 100.0  # meters
                     #start_long = 21.797351
                     #start_lat = 50.44721
